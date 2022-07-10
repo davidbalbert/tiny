@@ -1,25 +1,18 @@
 CC := clang
-CFLAGS := --target=arm64-unknown-eabi -ffreestanding
+CFLAGS := -ffreestanding --target=arm64-unknown-eabi
 
-AS := clang
 ASFLAGS := --target=arm64-unknown-eabi
 
 LD := /opt/homebrew/opt/llvm/bin/ld.lld
 LDFLAGS := -nostdlib -T kernel.ld
+LINK.o := $(LD) $(LDFLAGS) $(TARGET_ARCH)
 
 .PHONY: run
-run: kernel.elf
-	qemu-system-aarch64 -machine virt -cpu cortex-a57 -kernel kernel.elf -nographic -serial mon:stdio
+run: kernel
+	qemu-system-aarch64 -machine virt -cpu cortex-a57 -kernel kernel -nographic -serial mon:stdio
 
-kernel.elf: boot.o kernel.o
-	$(LD) $(LDFLAGS) -o $@ $^
+kernel: kernel.o boot.o
 
 .PHONY: clean
 clean:
-	rm -f *.o *.elf
-
-%.o: %.c
-	$(CC) -c $(CFLAGS) -o $@ $<
-
-%.o: %.s
-	$(AS) -c $(ASFLAGS) -o $@ $<
+	rm -f *.o kernel
